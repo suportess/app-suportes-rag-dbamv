@@ -1,0 +1,45 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# app-suportes-rag-dbamv — VPS
+#
+# Pré-requisito: container pgvector-rag rodando na infra-net
+#   (deploy via infra-suportes-pgvector antes desta app)
+#
+# Variáveis injetadas pelo CI/CD via secret APP_ENV no GitHub Actions.
+# Para rodar manualmente:
+#   cp .env.example .env.app
+#   docker compose up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  app-suportes-rag-dbamv:
+    image: ${DOCKER_USERNAME:-suportess}/app-suportes-rag-dbamv:${IMAGE_TAG:-latest}
+    container_name: app-suportes-rag-dbamv
+    restart: unless-stopped
+    env_file: .env.app
+    expose:
+      - "8032"
+    networks:
+      - infra-net
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-suportes-rag-dbamv.rule=Host(`rag.suportes.tec.br`)"
+      - "traefik.http.routers.app-suportes-rag-dbamv.entrypoints=websecure"
+      - "traefik.http.routers.app-suportes-rag-dbamv.tls=true"
+      - "traefik.http.routers.app-suportes-rag-dbamv.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app-suportes-rag-dbamv.loadbalancer.server.port=8032"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8032/api/actuator/health | grep -q '\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  infra-net:
+    external: true
+    name: infra-net
+  proxy:
+    external: true
+    name: proxy

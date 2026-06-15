@@ -1,0 +1,294 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-06-14",
+  "__export_source": "app-suportes-rag-dbamv",
+  "resources": [
+    {
+      "_id": "wrk_rag_dbamv",
+      "_type": "workspace",
+      "name": "app-suportes-rag-dbamv",
+      "description": "RAG sobre schema DBAMV — catálogo semântico + geração de SQL via LLM",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_rag_base",
+      "_type": "environment",
+      "parentId": "wrk_rag_dbamv",
+      "name": "Local",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "tabela_id": "00000000-0000-0000-0000-000000000000"
+      }
+    },
+
+    {
+      "_id": "fld_indexacao",
+      "_type": "request_group",
+      "parentId": "wrk_rag_dbamv",
+      "name": "Indexação"
+    },
+    {
+      "_id": "fld_consulta",
+      "_type": "request_group",
+      "parentId": "wrk_rag_dbamv",
+      "name": "Consulta RAG"
+    },
+    {
+      "_id": "fld_tabelas",
+      "_type": "request_group",
+      "parentId": "wrk_rag_dbamv",
+      "name": "Tabelas"
+    },
+    {
+      "_id": "fld_relacionamentos",
+      "_type": "request_group",
+      "parentId": "wrk_rag_dbamv",
+      "name": "Relacionamentos"
+    },
+    {
+      "_id": "fld_exemplos",
+      "_type": "request_group",
+      "parentId": "wrk_rag_dbamv",
+      "name": "Exemplos"
+    },
+    {
+      "_id": "fld_health",
+      "_type": "request_group",
+      "parentId": "wrk_rag_dbamv",
+      "name": "Health"
+    },
+
+    {
+      "_id": "req_indexar_tudo",
+      "_type": "request",
+      "parentId": "fld_indexacao",
+      "name": "Indexar tudo (gera embeddings)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/indexacao",
+      "description": "Apaga todos os vetores existentes e reindexa todas as tabelas/colunas/relacionamentos + exemplos. Execute após popular o banco via Flyway V2 ou quando quiser reconstruir o índice do zero.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": { "mimeType": "application/json", "text": "" }
+    },
+    {
+      "_id": "req_indexar_tabela",
+      "_type": "request",
+      "parentId": "fld_indexacao",
+      "name": "Indexar tabela individual",
+      "method": "POST",
+      "url": "{{ base_url }}/api/indexacao/EST_PRO",
+      "description": "Re-indexa apenas uma tabela pelo nome (case-insensitive). Remove o vetor antigo da tabela no vector store e insere o novo com a descrição/colunas atuais. Use após PATCH /api/tabelas/{nome}/descricao para refletir a mudança sem re-indexar tudo.",
+      "headers": [],
+      "body": { "mimeType": "application/json", "text": "" }
+    },
+
+    {
+      "_id": "req_consulta_sql",
+      "_type": "request",
+      "parentId": "fld_consulta",
+      "name": "Gerar SQL — pergunta em linguagem natural",
+      "method": "POST",
+      "url": "{{ base_url }}/api/consulta",
+      "description": "Envia uma pergunta em português, o RAG busca contexto no vector store e o LLM gera o SQL Oracle.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"pergunta\": \"Quais tabelas guardam as devoluções de produtos ao fornecedor?\",\n  \"topK\": 5\n}"
+      }
+    },
+    {
+      "_id": "req_consulta_entradas",
+      "_type": "request",
+      "parentId": "fld_consulta",
+      "name": "Gerar SQL — entradas por produto",
+      "method": "POST",
+      "url": "{{ base_url }}/api/consulta",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"pergunta\": \"Liste todas as entradas de produto com lote e data de validade para o produto 8930\",\n  \"topK\": 8\n}"
+      }
+    },
+    {
+      "_id": "req_consulta_estoque",
+      "_type": "request",
+      "parentId": "fld_consulta",
+      "name": "Gerar SQL — saldo consignado por fornecedor",
+      "method": "POST",
+      "url": "{{ base_url }}/api/consulta",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"pergunta\": \"Qual o saldo consignado por fornecedor para um determinado produto na tabela EST_CONSIG_FORN?\",\n  \"topK\": 5\n}"
+      }
+    },
+
+    {
+      "_id": "req_tabela_listar",
+      "_type": "request",
+      "parentId": "fld_tabelas",
+      "name": "Listar tabelas",
+      "method": "GET",
+      "url": "{{ base_url }}/api/tabelas",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_tabela_buscar",
+      "_type": "request",
+      "parentId": "fld_tabelas",
+      "name": "Buscar tabela por ID",
+      "method": "GET",
+      "url": "{{ base_url }}/api/tabelas/{{ tabela_id }}",
+      "description": "Substitua tabela_id no environment pelo UUID real retornado em Listar tabelas.",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_tabela_buscar_nome",
+      "_type": "request",
+      "parentId": "fld_tabelas",
+      "name": "Buscar tabela por nome",
+      "method": "GET",
+      "url": "{{ base_url }}/api/tabelas/nome/EST_PRO",
+      "description": "Busca uma tabela pelo nome (case-insensitive). Retorna id, descricao e colunas.",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_tabela_criar",
+      "_type": "request",
+      "parentId": "fld_tabelas",
+      "name": "Criar tabela manual",
+      "method": "POST",
+      "url": "{{ base_url }}/api/tabelas",
+      "description": "Cadastra uma tabela manualmente com suas colunas. Útil para complementar o que o V2 não capturou.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"ENT_PRO\",\n  \"schemaOra\": \"DBAMV\",\n  \"descricao\": \"Cabeçalho das entradas de produto (nota fiscal de compra/consignação)\",\n  \"colunas\": [\n    {\n      \"nome\": \"CD_ENT_PRO\",\n      \"tipoDado\": \"NUMBER\",\n      \"descricao\": \"Identificador único da entrada\",\n      \"nullable\": false,\n      \"chavePrimaria\": true\n    },\n    {\n      \"nome\": \"CD_FORNECEDOR\",\n      \"tipoDado\": \"NUMBER\",\n      \"descricao\": \"Código do fornecedor\",\n      \"nullable\": false,\n      \"chavePrimaria\": false\n    },\n    {\n      \"nome\": \"DT_ENTRADA\",\n      \"tipoDado\": \"DATE\",\n      \"descricao\": \"Data da entrada do produto\",\n      \"nullable\": true,\n      \"chavePrimaria\": false\n    },\n    {\n      \"nome\": \"TP_DOCUMENTO_ENTRADA\",\n      \"tipoDado\": \"VARCHAR2\",\n      \"descricao\": \"Tipo do documento: C=Consignado, N=Normal\",\n      \"nullable\": true,\n      \"chavePrimaria\": false\n    }\n  ]\n}"
+      }
+    },
+    {
+      "_id": "req_tabela_atualizar_descricao",
+      "_type": "request",
+      "parentId": "fld_tabelas",
+      "name": "Atualizar descrição da tabela",
+      "method": "PATCH",
+      "url": "{{ base_url }}/api/tabelas/EST_PRO/descricao",
+      "description": "Atualiza apenas a descrição semântica de uma tabela pelo nome (case-insensitive). Preserva colunas e relacionamentos. Zera indexadoEm para forçar re-indexação. Após isso, chame POST /api/indexacao/{nome}.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"descricao\": \"Tabela responsavel por guardar o saldo dos produtos por estoque, o saldo nesta tabela é saldo na unidade de referencia do produto\"\n}"
+      }
+    },
+    {
+      "_id": "req_tabela_deletar",
+      "_type": "request",
+      "parentId": "fld_tabelas",
+      "name": "Deletar tabela por ID",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/tabelas/{{ tabela_id }}",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+
+    {
+      "_id": "req_rel_criar",
+      "_type": "request",
+      "parentId": "fld_relacionamentos",
+      "name": "Criar relacionamento (FK manual)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/relacionamentos",
+      "description": "Registra uma FK entre duas tabelas já cadastradas. Use os UUIDs retornados em Listar tabelas.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"tabelaOrigemId\": \"00000000-0000-0000-0000-000000000001\",\n  \"colunaOrigem\": \"CD_ENT_PRO\",\n  \"tabelaDestinoId\": \"00000000-0000-0000-0000-000000000002\",\n  \"colunaDestino\": \"CD_ENT_PRO\",\n  \"descricao\": \"FK_ITENT_PRO_ENT_PRO\"\n}"
+      }
+    },
+    {
+      "_id": "req_rel_deletar",
+      "_type": "request",
+      "parentId": "fld_relacionamentos",
+      "name": "Deletar relacionamento por ID",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/relacionamentos/{{ tabela_id }}",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+
+    {
+      "_id": "req_exemplo_listar",
+      "_type": "request",
+      "parentId": "fld_exemplos",
+      "name": "Listar exemplos",
+      "method": "GET",
+      "url": "{{ base_url }}/api/exemplos",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_exemplo_criar",
+      "_type": "request",
+      "parentId": "fld_exemplos",
+      "name": "Criar exemplo (few-shot)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/exemplos",
+      "description": "Adiciona um par pergunta→SQL ao catálogo. Esses exemplos são indexados e usados como few-shot pelo RAG para melhorar a qualidade das respostas.",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"pergunta\": \"Liste as devoluções de produto ao fornecedor com valor total por fornecedor\",\n  \"sqlGerado\": \"SELECT e.CD_FORNECEDOR, SUM(i.QT_DEVOLVIDA * i.VL_UNITARIO) AS VL_TOTAL\\nFROM DBAMV.DEV_FOR d\\nJOIN DBAMV.ITDEV_FOR i ON i.CD_DEVOLUCAO = d.CD_DEVOLUCAO\\nJOIN DBAMV.ENT_PRO e ON e.CD_ENT_PRO = d.CD_ENT_PRO\\nGROUP BY e.CD_FORNECEDOR\\nORDER BY VL_TOTAL DESC\",\n  \"descricao\": \"Devolução consolidada por fornecedor\"\n}"
+      }
+    },
+    {
+      "_id": "req_exemplo_deletar",
+      "_type": "request",
+      "parentId": "fld_exemplos",
+      "name": "Deletar exemplo por ID",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/exemplos/{{ tabela_id }}",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "parentId": "fld_health",
+      "name": "Health check",
+      "method": "GET",
+      "url": "{{ base_url }}/actuator/health",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    },
+    {
+      "_id": "req_info",
+      "_type": "request",
+      "parentId": "fld_health",
+      "name": "Info",
+      "method": "GET",
+      "url": "{{ base_url }}/actuator/info",
+      "headers": [],
+      "body": { "mimeType": "application/json" }
+    }
+  ]
+}

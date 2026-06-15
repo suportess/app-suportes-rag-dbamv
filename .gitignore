@@ -1,0 +1,23 @@
+# Build
+app/target/
+*.class
+
+# Arquivos de backup do editor
+*.properties~
+*.java~
+*.xml~
+*~
+
+# Segredos
+.env
+.env.app
+*.env
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
