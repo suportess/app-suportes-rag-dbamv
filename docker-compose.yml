@@ -30,7 +30,7 @@ services:
       - "traefik.http.routers.app-suportes-rag-dbamv.tls.certresolver=letsencrypt"
       - "traefik.http.services.app-suportes-rag-dbamv.loadbalancer.server.port=8032"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8032/api/actuator/health | grep -q '\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8032/actuator/health | grep -q '\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
