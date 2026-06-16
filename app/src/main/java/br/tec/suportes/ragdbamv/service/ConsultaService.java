@@ -30,8 +30,9 @@ public class ConsultaService {
     private final RelacionamentoRepository relacionamentoRepository;
 
     // Captura nomes de tabela Oracle em MAIÚSCULAS (min 3 chars, letras/números/_)
-    private static final Pattern NOME_TABELA = Pattern.compile("\\b([A-Z][A-Z0-9_]{2,})\\b");
-    private static final Pattern MD_FENCE    = Pattern.compile("^```[a-zA-Z]*\\s*|\\s*```$", Pattern.MULTILINE);
+    private static final Pattern NOME_TABELA  = Pattern.compile("\\b([A-Z][A-Z0-9_]{2,})\\b");
+    private static final Pattern MD_FENCE     = Pattern.compile("^```[a-zA-Z]*\\s*|\\s*```$", Pattern.MULTILINE);
+    private static final Pattern SQL_INICIO   = Pattern.compile("(?i)^\\s*(SELECT|WITH|INSERT|UPDATE|DELETE|MERGE)\\b", Pattern.MULTILINE);
 
     public ConsultaResponse consultar(ConsultaRequest req) {
 
@@ -70,22 +71,24 @@ public class ConsultaService {
 
         // 4. Prompt estrito
         String prompt = """
-                Você é um especialista em SQL Oracle para o banco DBAMV.
+                Você é um gerador de SQL Oracle para o banco DBAMV.
 
-                REGRAS OBRIGATÓRIAS:
-                1. Use SOMENTE as tabelas e colunas que aparecem explicitamente no CONTEXTO abaixo.
-                2. NUNCA invente ou assuma nomes de colunas — use exatamente os nomes listados no contexto.
-                3. Se uma tabela pedida não estiver no contexto, diga que os metadados não estão disponíveis.
+                REGRAS — SIGA À RISCA:
+                1. Use SOMENTE as tabelas e colunas presentes no CONTEXTO abaixo.
+                2. NUNCA invente ou assuma nomes de colunas — use exatamente os nomes do contexto.
+                3. Se os metadados necessários não estiverem no contexto, responda apenas: METADADOS_INDISPONIVEIS
                 4. Sempre qualifique tabelas com o schema: DBAMV.<TABELA>.
-                5. Retorne SOMENTE o SQL executável, sem markdown, sem explicações.
+                5. Sua resposta deve conter EXCLUSIVAMENTE o SQL Oracle executável.
+                   — Proibido qualquer frase, explicação ou comentário antes ou depois do SQL.
+                   — Proibido blocos markdown (``` sql ```).
+                   — A resposta começa com SELECT, WITH, INSERT, UPDATE ou DELETE.
 
                 CONTEXTO DO BANCO DBAMV:
                 %s
 
-                PERGUNTA:
+                PERGUNTA DO USUÁRIO:
                 %s
 
-                SQL Oracle:
                 """.formatted(contextoTexto, req.getPergunta());
 
         String sql = chatClient.prompt(prompt).call().content();
@@ -127,6 +130,12 @@ public class ConsultaService {
 
     private String limparSql(String raw) {
         if (raw == null) return "";
-        return MD_FENCE.matcher(raw.trim()).replaceAll("").trim();
+        String s = MD_FENCE.matcher(raw.trim()).replaceAll("").trim();
+        // Se o modelo incluiu texto antes do SQL, extrai a partir da primeira keyword DML
+        Matcher m = SQL_INICIO.matcher(s);
+        if (m.find()) {
+            s = s.substring(m.start()).trim();
+        }
+        return s;
     }
 }
