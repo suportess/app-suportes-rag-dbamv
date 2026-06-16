@@ -136,6 +136,6 @@ public class ConsultaService {
         if (m.find()) {
             s = s.substring(m.start()).trim();
         }
-        return s;
+        return s.replaceAll("\\s*\\n\\s*", " ").trim();
     }
 }
