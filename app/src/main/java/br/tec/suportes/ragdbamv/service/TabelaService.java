@@ -1,5 +1,6 @@
 package br.tec.suportes.ragdbamv.service;
 
+import br.tec.suportes.ragdbamv.dto.PagedResponse;
 import br.tec.suportes.ragdbamv.dto.TabelaDescricaoRequest;
 import br.tec.suportes.ragdbamv.dto.TabelaRequest;
 import br.tec.suportes.ragdbamv.dto.TabelaResponse;
@@ -7,6 +8,8 @@ import br.tec.suportes.ragdbamv.model.Coluna;
 import br.tec.suportes.ragdbamv.model.Tabela;
 import br.tec.suportes.ragdbamv.repository.TabelaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,10 +49,11 @@ public class TabelaService {
     }
 
     @Transactional(readOnly = true)
-    public List<TabelaResponse> listar() {
-        return tabelaRepository.findAllByOrderByNomeAsc().stream()
-                .map(TabelaResponse::from)
-                .toList();
+    public PagedResponse<TabelaResponse> listar(int pagina, int tamanhoPagina) {
+        var pageable = PageRequest.of(pagina, tamanhoPagina, Sort.by("nome").ascending());
+        var page = tabelaRepository.findAll(pageable);
+        var dados = page.getContent().stream().map(TabelaResponse::from).toList();
+        return new PagedResponse<>(dados, pagina, tamanhoPagina, page.getTotalElements());
     }
 
     @Transactional(readOnly = true)

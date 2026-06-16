@@ -1,5 +1,6 @@
 package br.tec.suportes.ragdbamv.controller;
 
+import br.tec.suportes.ragdbamv.dto.PagedResponse;
 import br.tec.suportes.ragdbamv.dto.TabelaDescricaoRequest;
 import br.tec.suportes.ragdbamv.dto.TabelaRequest;
 import br.tec.suportes.ragdbamv.dto.TabelaResponse;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,8 +25,10 @@ public class TabelaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TabelaResponse>> listar() {
-        return ResponseEntity.ok(tabelaService.listar());
+    public ResponseEntity<PagedResponse<TabelaResponse>> listar(
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamanhoPagina) {
+        return ResponseEntity.ok(tabelaService.listar(pagina, tamanhoPagina));
     }
 
     @GetMapping("/{id}")
