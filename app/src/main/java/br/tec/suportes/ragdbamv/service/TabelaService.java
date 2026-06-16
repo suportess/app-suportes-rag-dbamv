@@ -49,9 +49,11 @@ public class TabelaService {
     }
 
     @Transactional(readOnly = true)
-    public PagedResponse<TabelaResponse> listar(int pagina, int tamanhoPagina) {
+    public PagedResponse<TabelaResponse> listar(int pagina, int tamanhoPagina, String filtroNome) {
         var pageable = PageRequest.of(pagina, tamanhoPagina, Sort.by("nome").ascending());
-        var page = tabelaRepository.findAll(pageable);
+        var page = (filtroNome != null && !filtroNome.isBlank())
+                ? tabelaRepository.findByNomeContainingIgnoreCase(filtroNome.trim(), pageable)
+                : tabelaRepository.findAll(pageable);
         var dados = page.getContent().stream().map(TabelaResponse::from).toList();
         return new PagedResponse<>(dados, pagina, tamanhoPagina, page.getTotalElements());
     }

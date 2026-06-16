@@ -27,8 +27,9 @@ public class TabelaController {
     @GetMapping
     public ResponseEntity<PagedResponse<TabelaResponse>> listar(
             @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamanhoPagina) {
-        return ResponseEntity.ok(tabelaService.listar(pagina, tamanhoPagina));
+            @RequestParam(defaultValue = "20") int tamanhoPagina,
+            @RequestParam(required = false) String nome) {
+        return ResponseEntity.ok(tabelaService.listar(pagina, tamanhoPagina, nome));
     }
 
     @GetMapping("/{id}")

@@ -11,4 +11,5 @@ public interface TabelaRepository extends JpaRepository<Tabela, UUID> {
     Optional<Tabela> findByNomeAndSchemaOra(String nome, String schemaOra);
     Optional<Tabela> findByNomeIgnoreCase(String nome);
     List<Tabela> findAllByOrderByNomeAsc();
+    org.springframework.data.domain.Page<Tabela> findByNomeContainingIgnoreCase(String nome, org.springframework.data.domain.Pageable pageable);
 }
