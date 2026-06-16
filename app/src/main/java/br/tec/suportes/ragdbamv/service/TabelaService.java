@@ -33,7 +33,14 @@ public class TabelaService {
         tabela.setDescricao(req.getDescricao());
         tabela.setIndexadoEm(null); // força re-indexação
 
+        // uk_coluna_tabela_nome: Hibernate insere antes de deletar.
+        // Para updates, fazemos flush do clear() antes de re-inserir as colunas.
+        boolean isUpdate = tabela.getId() != null;
         tabela.getColunas().clear();
+        if (isUpdate) {
+            tabelaRepository.saveAndFlush(tabela);
+        }
+
         req.getColunas().forEach(cr -> {
             Coluna c = new Coluna();
             c.setNome(cr.getNome().toUpperCase());
